@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">我在這裡</string>
+    <string name="action_settings">設定</string>
+
+    <string name="sms_warning">
+        警告: 本程式會使用短訊功能.  口令無分大小寫.
+    </string>
+    <string name="sms_enable_receiver">啟動自動回報位置功能</string>
+    <string name="sms_keyword_label">口令</string>
+    <string name="sms_update_keyword">更新口令</string>
+    <string name="sms_restore_keyword">回復口令</string>
+
+    <string name="sms_testing_message">短訊測試: (建議先進行測試)</string>
+    <string name="sms_recipient_label">收件人電話</string>
+    <string name="sms_content_label">短訊內容</string>
+    <string name="sms_send_message">發出短訊</string>
+    <string name="sms_send_location">發出我的位置</string>
+
+
+    <string name="sms_speak_string_format">Message from "%1$s": %2$s</string>
+
+    <string name="msg_missing_recipient">請輸入收件人電話.</string>
+    <string name="msg_missing_message">請輸入短訊內容.</string>
+
+    <string name="msg_sms_sent">已發出短訊</string>
+    <string name="msg_sms_sent_err_generic">發生錯誤: 一般故障.</string>
+    <string name="msg_sms_sent_err_no_service">發生錯誤: 沒有短訊服務.</string>
+    <string name="msg_sms_sent_err_null_pdu">發生錯誤: Null PDU.</string>
+    <string name="msg_sms_sent_err_radio_off">發生錯誤: Radio off.</string>
+
+</resources>
