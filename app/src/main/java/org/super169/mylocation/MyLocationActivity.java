@@ -10,6 +10,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Location;
 import android.os.Bundle;
 import android.telephony.SmsManager;
 import android.text.TextUtils;
@@ -161,20 +162,20 @@ public class MyLocationActivity extends Activity {
 
                 String msgContent = "GPS not available";
 
-                if (gps.canGetLocation()) {
-                    gps.getLocation(false);
+                Location mLocation = gps.getLocation();
+                if (mLocation != null) {
                     float accuracy;
                     double latitude, longitude, speed;
-                    msgContent = gps.getProvider() + ": ";
+                    msgContent = mLocation.getProvider() + ": ";
                     DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                    Date date = new Date(gps.getTime());
+                    Date date = new Date(mLocation.getTime());
                     String sTime = format.format(date);
                     msgContent += sTime + " http://maps.google.com/maps?q=";
-                    latitude = gps.getLatitude();
-                    longitude = gps.getLongitude();
-                    speed = gps.getSpeed();
-                    // altitude = gps.getAltitude();
-                    accuracy = gps.getAccuracy();
+                    latitude = mLocation.getLatitude();
+                    longitude = mLocation.getLongitude();
+                    speed = mLocation.getSpeed();
+                    // altitude = mLocation.getAltitude();
+                    accuracy = mLocation.getAccuracy();
                     msgContent +=  String.format("%f", latitude) + "+" + String.format("%f", longitude);
                     msgContent += "  {A: " +  String.format("%.2f", accuracy) + "m; S:" + String.format("%.2f",speed) + "m}";
                 }
