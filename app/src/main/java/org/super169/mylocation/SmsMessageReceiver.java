@@ -72,8 +72,9 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
         dataKeyword = '#' + keyword;
         debugKeyword = '*' + keyword;
 
-        for (int i = 0; i < pdus.length; i++) {
-            SmsMessage message = SmsMessage.createFromPdu((byte[]) pdus[i]);
+        SmsMessage[] msgs = msgs = android.provider.Telephony.Sms.Intents.getMessagesFromIntent(intent);
+        for (int i = 0; i < msgs.length; i++) {
+            SmsMessage message = msgs[i];
             String fromAddress = message.getOriginatingAddress();
             String msgBody = message.getMessageBody().toString().toLowerCase();
 
