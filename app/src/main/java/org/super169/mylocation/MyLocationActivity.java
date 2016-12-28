@@ -1,5 +1,6 @@
 package org.super169.mylocation;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -33,11 +34,11 @@ public class MyLocationActivity extends Activity {
     /** Tag string for our debug logs */
     private static final String TAG = "MyLocationActivity";
 
-    public static final String SMS_RECIPIENT_EXTRA = "org.super169.mylocation.SMS_RECIPIENT";
-    public static final String ACTION_SMS_SENT = "org.super169.mylocation.SMS_SENT_ACTION";
+    private static final String SMS_RECIPIENT_EXTRA = "org.super169.mylocation.SMS_RECIPIENT";
+    private static final String ACTION_SMS_SENT = "org.super169.mylocation.SMS_SENT_ACTION";
 
     private static BroadcastReceiver mReceiver;
-    static GPSTracker gps;
+    private static GPSTracker gps;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,12 +46,12 @@ public class MyLocationActivity extends Activity {
 
         setContentView(R.layout.activity_my_location);
 
-        gps = new GPSTracker(MyLocationActivity.this);
+        gps = new GPSTracker();
 
         if (getIntent().hasExtra(SMS_RECIPIENT_EXTRA)) {
             ((TextView) findViewById(R.id.sms_recipient)).setText(getIntent().getExtras()
                     .getString(SMS_RECIPIENT_EXTRA));
-            ((TextView) findViewById(R.id.sms_content)).requestFocus();
+            findViewById(R.id.sms_content).requestFocus();
         }
 
         final TextView appVersion = (TextView) MyLocationActivity.this.findViewById(R.id.app_version);
@@ -145,6 +146,7 @@ public class MyLocationActivity extends Activity {
 
         Button sendLocationButton = (Button) findViewById(R.id.sms_send_location);
         sendLocationButton.setOnClickListener(new View.OnClickListener() {
+            @SuppressLint("DefaultLocale")
             public void onClick(View v) {
 
                 if (TextUtils.isEmpty(recipientTextEdit.getText())) {
@@ -162,12 +164,17 @@ public class MyLocationActivity extends Activity {
 
                 String msgContent = "GPS not available";
 
-                Location mLocation = gps.getLocation();
+                Context context = getApplicationContext();
+                Location mLocation = gps.getLocation(context);
                 if (mLocation != null) {
                     float accuracy;
                     double latitude, longitude, speed;
                     msgContent = mLocation.getProvider() + ": ";
+
+                    // It is intends to use fixed format
+                    @SuppressLint("SimpleDateFormat")
                     DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
                     Date date = new Date(mLocation.getTime());
                     String sTime = format.format(date);
                     msgContent += sTime + " http://maps.google.com/maps?q=";
@@ -241,19 +248,20 @@ public class MyLocationActivity extends Activity {
 
     private void setPrefData(Context context, String key, String value) {
         SharedPreferences sharedPref = context.getSharedPreferences(
-                getString(R.string.shared_pref_key), Context.MODE_PRIVATE);
+                context.getString(R.string.shared_pref_key),  Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
         editor.putString(key, value);
-        editor.commit();
+        editor.apply();
     }
 
     private String getPrefData(Context context, String key) {
         return getPrefData(context, key, "");
     }
 
-    private String getPrefData(Context context, String key, String defValue) {
+    // Just prepare the parameter for future use in a generic method
+    private String getPrefData(Context context, String key, @SuppressWarnings("SameParameterValue") String defValue) {
         SharedPreferences sharedPref = context.getSharedPreferences(
-                getString(R.string.shared_pref_key), Context.MODE_PRIVATE);
+                context.getString(R.string.shared_pref_key),  Context.MODE_PRIVATE);
         return sharedPref.getString(key, defValue);
     }
 }
