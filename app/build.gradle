@@ -7,7 +7,7 @@ android {
     defaultConfig {
         applicationId "org.super169.mylocation"
         minSdkVersion 19
-        targetSdkVersion 23
+        targetSdkVersion 22
         versionCode 1
         versionName "1.2.2"
     }
