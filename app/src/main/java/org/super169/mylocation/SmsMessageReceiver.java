@@ -14,6 +14,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -74,7 +75,17 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
         if (extras == null)
             return;
 
-        String keyword, dataKeyword, debugKeyword;
+        String roaming, keyword, dataKeyword, debugKeyword;
+
+        roaming = getPrefData(context, context.getString(R.string.pref_key_roaming), context.getString(R.string.pref_roaming_default)).toLowerCase();
+
+        if (!roaming.equals("Y")) {
+            // Do not send SMS when roaming
+            TelephonyManager telManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+            if (telManager == null) return;
+            if (telManager.isNetworkRoaming()) return;
+        }
+
         keyword = getPrefData(context, context.getString(R.string.pref_key_keyword), context.getString(R.string.pref_keyword_default)).toLowerCase();
         dataKeyword = '#' + keyword;
         debugKeyword = '*' + keyword;

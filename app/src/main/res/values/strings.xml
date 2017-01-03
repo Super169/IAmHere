@@ -8,11 +8,15 @@
     <string name="shared_pref_key" translatable="false">org.super169.shares</string>
     <string name="pref_key_keyword" translatable="false">keyword</string>
     <string name="pref_keyword_default" translatable="false">location</string>
+    <string name="pref_key_roaming" translatable="false">roaming</string>
+    <string name="pref_roaming_default" translatable="false">N</string>
 
     <string name="sms_warning">
         WARNING: This program will send text messages (SMS).  Keyword is case insensitive.
     </string>
     <string name="sms_enable_receiver">Enable SMS location reporting</string>
+    <string name="sms_enable_roaming">Send SMS when roaming (not recommended)</string>
+
     <string name="sms_keyword_label">Keyword</string>
     <string name="sms_update_keyword">Update Keyword</string>
     <string name="sms_restore_keyword">Restore Keyword</string>
@@ -25,6 +29,8 @@
     <string name="sms_send_location">Send Location</string>
     <string name="msg_missing_recipient">Please enter a message recipient.</string>
     <string name="msg_missing_message">Please enter message content.</string>
+    <string name="msg_sms_not_allowed">SMS is not allowed in roaming.</string>
+
 
     <string name="msg_sms_sent">SMS sent to request for location.</string>
     <string name="msg_sms_sent_err_generic">Error: Generic Failure.</string>

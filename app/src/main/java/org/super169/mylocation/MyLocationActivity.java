@@ -14,6 +14,7 @@ import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.telephony.SmsManager;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -80,6 +81,23 @@ public class MyLocationActivity extends Activity {
             }
         });
 
+
+        final CheckBox roamingCheckBox = (CheckBox) findViewById(R.id.sms_enable_roaming);
+        String roaming = getPrefData(MyLocationActivity.this,getString(R.string.pref_key_roaming) );
+        boolean enableRoaming = roaming.equals("Y");
+        roamingCheckBox.setChecked(enableRoaming);
+        roamingCheckBox.setTextColor((enableRoaming ? Color.RED : Color.BLACK));
+
+        roamingCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                                                       public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+               String msg = (isChecked ? "Enable" : "Disable") + " SMS Roaming";
+               Log.d(TAG, msg);
+               setPrefData(MyLocationActivity.this, getString(R.string.pref_key_roaming), (isChecked ? "Y" : "N"));
+               Toast.makeText(MyLocationActivity.this, msg, Toast.LENGTH_SHORT).show();
+               roamingCheckBox.setTextColor((isChecked ? Color.RED : Color.BLACK));
+           }
+       });
+
         final EditText keywordTextEdit = (EditText) MyLocationActivity.this
                 .findViewById(R.id.et_keyword);
         String keyword = getPrefData(MyLocationActivity.this,getString(R.string.pref_key_keyword) );
@@ -113,34 +131,42 @@ public class MyLocationActivity extends Activity {
                 .findViewById(R.id.sms_content);
         final TextView statusView = (TextView) MyLocationActivity.this.findViewById(R.id.sms_status);
 
+        final TextView debugMsg = (TextView) MyLocationActivity.this.findViewById((R.id.debug_msg));
+
         // Watch for send button clicks and send text messages.
         Button sendButton = (Button) findViewById(R.id.sms_send_message);
         sendButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                if (TextUtils.isEmpty(recipientTextEdit.getText())) {
-                    Toast.makeText(MyLocationActivity.this, getString(R.string.msg_missing_recipient),
+                if (sendMessageAllowed()) {
+                    if (TextUtils.isEmpty(recipientTextEdit.getText())) {
+                        Toast.makeText(MyLocationActivity.this, getString(R.string.msg_missing_recipient),
+                                Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    if (TextUtils.isEmpty(contentTextEdit.getText())) {
+                        Toast.makeText(MyLocationActivity.this, getString(R.string.msg_missing_message),
+                                Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    recipientTextEdit.setEnabled(false);
+                    contentTextEdit.setEnabled(false);
+
+                    SmsManager sms = SmsManager.getDefault();
+
+                    List<String> messages = sms.divideMessage(contentTextEdit.getText().toString());
+
+                    String recipient = recipientTextEdit.getText().toString();
+                    for (String message : messages) {
+                        sms.sendTextMessage(recipient, null, message, PendingIntent.getBroadcast(
+                                MyLocationActivity.this, 0, new Intent(ACTION_SMS_SENT), 0), null);
+                    }
+                } else {
+                    Toast.makeText(MyLocationActivity.this, getString(R.string.msg_sms_not_allowed),
                             Toast.LENGTH_SHORT).show();
-                    return;
                 }
 
-                if (TextUtils.isEmpty(contentTextEdit.getText())) {
-                    Toast.makeText(MyLocationActivity.this, getString(R.string.msg_missing_message),
-                            Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                recipientTextEdit.setEnabled(false);
-                contentTextEdit.setEnabled(false);
-
-                SmsManager sms = SmsManager.getDefault();
-
-                List<String> messages = sms.divideMessage(contentTextEdit.getText().toString());
-
-                String recipient = recipientTextEdit.getText().toString();
-                for (String message : messages) {
-                    sms.sendTextMessage(recipient, null, message, PendingIntent.getBroadcast(
-                            MyLocationActivity.this, 0, new Intent(ACTION_SMS_SENT), 0), null);
-                }
             }
         });
 
@@ -231,6 +257,14 @@ public class MyLocationActivity extends Activity {
                 statusView.setTextColor(error ? Color.RED : Color.GREEN);
             }
         };
+
+            TelephonyManager telManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+            if (telManager == null) return;
+            // String msg = telManager.getLine1Number();
+            String msg = String.format("%1$s : %2$s [%3$s]",
+                                      (telManager.isNetworkRoaming() ? "Roaming" : "Local"),
+                                      telManager.getNetworkCountryIso(), telManager.getNetworkOperatorName());
+            debugMsg.setText(msg);
     }
 
     @Override
@@ -263,5 +297,17 @@ public class MyLocationActivity extends Activity {
         SharedPreferences sharedPref = context.getSharedPreferences(
                 context.getString(R.string.shared_pref_key),  Context.MODE_PRIVATE);
         return sharedPref.getString(key, defValue);
+    }
+
+    private boolean sendMessageAllowed() {
+        Context context = getApplicationContext();
+        String roaming = getPrefData(context, context.getString(R.string.pref_key_roaming), context.getString(R.string.pref_roaming_default)).toLowerCase();
+        if (!roaming.equals("Y")) {
+            // Do not send SMS when roaming
+            TelephonyManager telManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+            if (telManager == null) return false;
+            if (telManager.isNetworkRoaming()) return false;
+        }
+        return true;
     }
 }
