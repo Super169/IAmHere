@@ -8,7 +8,7 @@
         警告: 本程式會使用短訊功能.  口令無分大小寫.
     </string>
     <string name="sms_enable_receiver">啟動自動回報位置功能</string>
-    <string name="sms_enable_roaming">漫遊時同樣發出短訊 (不建議)</string>
+    <string name="sms_enable_roaming">漫遊時同樣發出短訊</string>
     <string name="sms_keyword_label">口令</string>
     <string name="sms_update_keyword">更新口令</string>
     <string name="sms_restore_keyword">回復口令</string>

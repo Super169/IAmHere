@@ -15,7 +15,7 @@
         WARNING: This program will send text messages (SMS).  Keyword is case insensitive.
     </string>
     <string name="sms_enable_receiver">Enable SMS location reporting</string>
-    <string name="sms_enable_roaming">Send SMS when roaming (not recommended)</string>
+    <string name="sms_enable_roaming">Send SMS when roaming</string>
 
     <string name="sms_keyword_label">Keyword</string>
     <string name="sms_update_keyword">Update Keyword</string>

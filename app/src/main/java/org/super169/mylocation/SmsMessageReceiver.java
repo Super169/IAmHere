@@ -77,7 +77,7 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
 
         String roaming, keyword, dataKeyword, debugKeyword;
 
-        roaming = getPrefData(context, context.getString(R.string.pref_key_roaming), context.getString(R.string.pref_roaming_default)).toLowerCase();
+        roaming = getPrefData(context, context.getString(R.string.pref_key_roaming), context.getString(R.string.pref_roaming_default)).toUpperCase();
 
         if (!roaming.equals("Y")) {
             // Do not send SMS when roaming
