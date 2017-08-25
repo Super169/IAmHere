@@ -20,6 +20,20 @@ import android.util.Log;
  */
 public class GPSTracker extends Service implements LocationListener {
 
+    public static LocationResult checkPermission(Context context) {
+        LocationResult mResult = new LocationResult();
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            mResult.SetError(LocationResult.ResultStatus.NO_PERMISSION, "ACCESS_COARSE_LOCATION not granted");
+            return mResult;
+        }
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            mResult.SetError(LocationResult.ResultStatus.NO_PERMISSION, "ACCESS_FINE_LOCATION not granted");
+            return mResult;
+        }
+        return mResult;
+    }
+
+
     public enum LocationType {
         GPS,
         NETWORK
@@ -40,10 +54,13 @@ public class GPSTracker extends Service implements LocationListener {
     }
 
     public Location getLocation(Context context) {
+        LocationResult mResult;
         Location mLocationGps, mLocationReturn;
+        mResult = GPSTracker.checkPermission(context);
+        if (mResult.status() != LocationResult.ResultStatus.EMPTY) return null;
+
         mLocationGps = getLocationGps(context);
         mLocationReturn = getLocationNetwork(context);
-
         if ((mLocationReturn == null) || ((mLocationGps != null) && (mLocationGps.getTime() > mLocationReturn.getTime()))) {
             mLocationReturn = mLocationGps;
         }
@@ -63,14 +80,6 @@ public class GPSTracker extends Service implements LocationListener {
     public LocationResult requestLocation(Context context, LocationType mLocationType) {
         LocationResult mResult = new LocationResult();
         try {
-            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                mResult.SetError(LocationResult.ResultStatus.NO_PERMISSION, "ACCESS_COARSE_LOCATION not granted");
-                return mResult;
-            }
-            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                mResult.SetError(LocationResult.ResultStatus.NO_PERMISSION, "ACCESS_FINE_LOCATION not granted");
-                return mResult;
-            }
             locationManager = (LocationManager) context.getSystemService(LOCATION_SERVICE);
             if (locationManager == null) {
                 mResult.SetError(LocationResult.ResultStatus.NO_SERVICE, "LOCATION_SERVICE is null");

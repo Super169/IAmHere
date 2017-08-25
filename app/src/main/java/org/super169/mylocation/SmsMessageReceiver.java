@@ -132,14 +132,20 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
 
     private void getGpsLocation(Context context) {
         if (gps == null) gps = new GPSTracker();
-        mLocationGps = gps.getLocationGps(context);
-        // return (mLocationGps != null);
+        if (GPSTracker.checkPermission(context).status() == LocationResult.ResultStatus.EMPTY) {
+            mLocationGps = gps.getLocationGps(context);
+        } else {
+            mLocationGps = null;
+        }
     }
 
     private void getNetworkLocation(Context context) {
         if (gps == null) gps = new GPSTracker();
-        mLocationNetwork = gps.getLocationNetwork(context);
-        // return (mLocationNetwork != null);
+        if (GPSTracker.checkPermission(context).status() == LocationResult.ResultStatus.EMPTY) {
+            mLocationNetwork = gps.getLocationNetwork(context);
+        } else {
+            mLocationNetwork = null;
+        }
     }
 
     private void prepareLocation(Context context, String recipient) {
@@ -271,7 +277,12 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
         Log.d(TAG, "GoogleApiClient connected");
 
         if (mContext != null) {
+    /*
             if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                mLocationFused = null;
+                */
+            LocationResult mLocationResult = GPSTracker.checkPermission(mContext);
+            if (mLocationResult.status() != LocationResult.ResultStatus.EMPTY) {
                 mLocationFused = null;
             } else {
                 mLocationFused = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
