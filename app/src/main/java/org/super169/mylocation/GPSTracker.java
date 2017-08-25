@@ -20,6 +20,11 @@ import android.util.Log;
  */
 public class GPSTracker extends Service implements LocationListener {
 
+    public enum LocationType {
+        GPS,
+        NETWORK
+    }
+
     // The minimum distance to change Updates in meters
     private static final long MIN_DISTANCE_CHANGE_FOR_UPDATES = 0; // 0 meters; request to update even no change
 
@@ -46,49 +51,67 @@ public class GPSTracker extends Service implements LocationListener {
     }
 
     public Location getLocationGps(Context context) {
-        Location mLocationReturn = null;
+        LocationResult mResult = requestLocation(context, LocationType.GPS);
+        return mResult.location();
+    }
+
+    public Location getLocationNetwork(Context context) {
+        LocationResult mResult = requestLocation(context, LocationType.NETWORK);
+        return mResult.location();
+    }
+
+    public LocationResult requestLocation(Context context, LocationType mLocationType) {
+        LocationResult mResult = new LocationResult();
         try {
-            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                return null;
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                mResult.SetError(LocationResult.ResultStatus.NO_PERMISSION, "ACCESS_COARSE_LOCATION not granted");
+                return mResult;
+            }
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                mResult.SetError(LocationResult.ResultStatus.NO_PERMISSION, "ACCESS_FINE_LOCATION not granted");
+                return mResult;
             }
             locationManager = (LocationManager) context.getSystemService(LOCATION_SERVICE);
-            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            if (locationManager == null) {
+                mResult.SetError(LocationResult.ResultStatus.NO_SERVICE, "LOCATION_SERVICE is null");
+                return mResult;
+            }
+            String provider = "";
+            String service = "";
+            switch (mLocationType) {
+                case GPS:
+                    provider = LocationManager.GPS_PROVIDER;
+                    service = "GPS";
+                    break;
+                case NETWORK:
+                    provider = LocationManager.NETWORK_PROVIDER;
+                    service = "Network";
+                    break;
+                default:
+                    mResult.SetError(LocationResult.ResultStatus.UNEXPECTED_ERROR, "Location Type: " + mLocationType.toString());
+                    return mResult;
+            }
+            if (locationManager.isProviderEnabled(provider)) {
                 locationManager.requestLocationUpdates(
-                        LocationManager.GPS_PROVIDER,
+                        provider,
                         MIN_TIME_BW_UPDATES,
                         MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
                 Log.d("Get GPS Location", "GPS Enabled");
                 if (locationManager != null) {
-                    mLocationReturn = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                    Location location = locationManager.getLastKnownLocation(provider);
+                    if (location == null) {
+                        mResult.SetError(LocationResult.ResultStatus.FAIL_GET_LOCATION, "Fail getting " + service + " location");
+                    } else {
+                        mResult.SetLocation(location);
+                    }
                 }
+            } else {
+                mResult.SetError(LocationResult.ResultStatus.NO_SERVICE, service + " not available");
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            mResult.SetError(LocationResult.ResultStatus.UNEXPECTED_ERROR, e.getMessage());
         }
-        return mLocationReturn;
-    }
-
-    public Location getLocationNetwork(Context context) {
-        Location mLocationReturn = null;
-        try {
-            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                return null;
-            }
-            locationManager = (LocationManager) context.getSystemService(LOCATION_SERVICE);
-            if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-                locationManager.requestLocationUpdates(
-                        LocationManager.NETWORK_PROVIDER,
-                        MIN_TIME_BW_UPDATES,
-                        MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
-                Log.d("Get Network Location", "Network Enabled");
-                if (locationManager != null) {
-                    mLocationReturn = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return mLocationReturn;
+        return mResult;
     }
 
     @Override

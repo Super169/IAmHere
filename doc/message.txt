@@ -1,0 +1,26 @@
+/*
+    Result format:
+        URL:        %s: %s: %s http://maps.google.com/maps?q=%f+%f  {A: %.2fm; S:%.2fm}
+        DATA:       #location#%s#%s;%s;%f;%f;%f;%f#
+        DEBUG:      #%s#%s;%s;%f;%f;%.2fm;%.2fm#
+        
+    %s :    version
+    %s :    location.getProvider()
+    %s :    format.format(new Date(location.getTime()))
+    %f :    location.getLatitude()
+    %f :    location.getLongitude()
+    %.2f :  location.getAccuracy()
+    %.2f :  location.getSpeed()
+        
+    Error Message:
+        URL:        %s: %d - %s
+        DATA:       %s: %d - %s
+        DEBUG:      %s: %d - %s
+        
+    %s :    version
+    %d :    status code
+    %s :    error message
+*/
+
+
+
