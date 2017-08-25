@@ -40,6 +40,10 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
     private static final String ACTION_SMS_SENT = "org.super169.mylocation.SMS_SENT_ACTION";
 
     private static GPSTracker gps;
+    private static LocationResult mResultGps = new LocationResult();
+    private static LocationResult mResultNetwork = new LocationResult();
+    private static LocationResult mResultFused = new LocationResult();
+
     private static Location mLocationGps;
     private static Location mLocationNetwork;
     private static Location mLocationFused;
@@ -122,6 +126,9 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
                         break;
                 }
                 Toast.makeText(context, sAction + mReqParameters, Toast.LENGTH_SHORT).show();
+                mResultGps.Reset();
+                mResultNetwork.Reset();
+                mResultFused.Reset();
                 mLocationGps = null;
                 mLocationNetwork = null;
                 mLocationFused = null;
@@ -133,8 +140,10 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
     private void getGpsLocation(Context context) {
         if (gps == null) gps = new GPSTracker();
         if (GPSTracker.checkPermission(context).status() == LocationResult.ResultStatus.EMPTY) {
-            mLocationGps = gps.getLocationGps(context);
+            mResultGps = gps.requestLocation(context, GPSTracker.LocationType.GPS);
+            mLocationGps = mResultGps.location();
         } else {
+            mResultGps.Reset();
             mLocationGps = null;
         }
     }
@@ -142,8 +151,10 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
     private void getNetworkLocation(Context context) {
         if (gps == null) gps = new GPSTracker();
         if (GPSTracker.checkPermission(context).status() == LocationResult.ResultStatus.EMPTY) {
-            mLocationNetwork = gps.getLocationNetwork(context);
+            mResultNetwork = gps.requestLocation(context, GPSTracker.LocationType.NETWORK);
+            mLocationNetwork = mResultNetwork.location();
         } else {
+            mResultNetwork.Reset();
             mLocationNetwork = null;
         }
     }
@@ -281,11 +292,14 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
             if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 mLocationFused = null;
                 */
-            LocationResult mLocationResult = GPSTracker.checkPermission(mContext);
-            if (mLocationResult.status() != LocationResult.ResultStatus.EMPTY) {
+            mResultFused = GPSTracker.checkPermission(mContext);
+            if (mResultFused.status() != LocationResult.ResultStatus.EMPTY) {
                 mLocationFused = null;
             } else {
                 mLocationFused = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+                if (mLocationFused == null ) {
+                    mResultFused.SetLocation(mLocationFused);
+                }
             }
         }
         resumeSendLocation();
@@ -294,6 +308,7 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
     @Override
     public void onConnectionSuspended(int i) {
         Log.d(TAG, "GoogleApiClient connection suspended");
+        mResultFused.Reset();
         mLocationFused = null;
         resumeSendLocation();
     }
@@ -301,6 +316,7 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         Log.d(TAG, "GoogleApiClient connection failed");
+        mResultFused.Reset();
         mLocationFused = null;
         resumeSendLocation();
     }

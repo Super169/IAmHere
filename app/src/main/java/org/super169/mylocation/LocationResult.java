@@ -21,6 +21,10 @@ public class LocationResult {
     private String mMessage;
 
     public LocationResult() {
+        this.Reset();
+    }
+
+    public void Reset() {
         mStatus = ResultStatus.EMPTY;
         mLocation = null;
         mMessage = "";
