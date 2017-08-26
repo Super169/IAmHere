@@ -20,6 +20,7 @@ import android.widget.Toast;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -215,17 +216,17 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
         switch (mReqDataType) {
             case URL:
                 msgFormatter = ": %s: %s: http://maps.google.com/maps?q=%f+%f  {A: %.2fm; S:%.2fm}";
-                msgErrorFormatter = ": %s: %s";
+                msgErrorFormatter = ": %s: %s : %s";
                 msgContent = dataVersion + getLocationReturn(msgFormatter, msgErrorFormatter, true);
                 break;
             case DATA:
                 msgFormatter = "#%s;%s;%f;%f;%.2f;%.2f#";
-                msgErrorFormatter = "#%s;%s#";
+                msgErrorFormatter = "#%s;%s;%s#";
                 msgContent = "#location#" + dataVersion + getLocationReturn(msgFormatter, msgErrorFormatter, false);
                 break;
             case DEBUG:
                 msgFormatter = "#%s;%s;%f;%f;%.2f;%.2f#";
-                msgErrorFormatter = "#%s;%s#";
+                msgErrorFormatter = "#%s;%s;%s#";
                 msgContent = "#" + dataVersion + getLocationReturn(msgFormatter, msgErrorFormatter, false);
                 break;
         }
@@ -280,7 +281,7 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
             if (location == null) return "";
             return String.format(formatter, location.getProvider(), format.format(new Date(location.getTime())), location.getLatitude(), location.getLongitude(), location.getAccuracy(), location.getSpeed());
         } else {
-            return String.format(errorFormatter, result.status().toString(), result.message());
+            return String.format(errorFormatter, format.format(Calendar.getInstance().getTime()), result.status().toString(), result.message());
         }
     }
 

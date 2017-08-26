@@ -13,12 +13,13 @@
     %.2f :  location.getSpeed()
         
     Error Message:
-        URL:        %s: %d - %s
-        DATA:       %s: %d - %s
-        DEBUG:      %s: %d - %s
+        URL:        %s: %s - %s - %s
+        DATA:       #location#%s#%s;%s;%s#
+        DEBUG:      #%s#%s;%s;%s#
         
     %s :    version
-    %d :    status code
+    %s :    current time
+    %s :    status code
     %s :    error message
 */
 
