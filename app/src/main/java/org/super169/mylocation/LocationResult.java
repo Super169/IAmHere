@@ -2,7 +2,7 @@ package org.super169.mylocation;
 import android.app.SharedElementCallback;
 import android.location.Location;
 /**
- * Created by makk on 25/08/2017.
+ * Created by James on 25/08/2017.
  */
 
 public class LocationResult {
@@ -54,5 +54,9 @@ public class LocationResult {
     public boolean IsReady() { return (mStatus == ResultStatus.READY); }
     public Location location() { return mLocation;}
     public ResultStatus status() {return mStatus; }
+    public long getTime() {
+        if (mLocation == null) return 0;
+        return mLocation.getTime();
+    }
     public String message() { return mMessage; }
 }

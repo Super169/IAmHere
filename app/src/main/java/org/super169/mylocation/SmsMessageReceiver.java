@@ -44,10 +44,6 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
     private static LocationResult mResultNetwork = new LocationResult();
     private static LocationResult mResultFused = new LocationResult();
 
-    private static Location mLocationGps;
-    private static Location mLocationNetwork;
-    private static Location mLocationFused;
-
     // It is intended to use a fixed date format.
     @SuppressLint("SimpleDateFormat")
     private static final DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -129,9 +125,6 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
                 mResultGps.Reset();
                 mResultNetwork.Reset();
                 mResultFused.Reset();
-                mLocationGps = null;
-                mLocationNetwork = null;
-                mLocationFused = null;
                 this.prepareLocation(context, fromAddress);
             }
         }
@@ -141,10 +134,8 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
         if (gps == null) gps = new GPSTracker();
         if (GPSTracker.checkPermission(context).status() == LocationResult.ResultStatus.EMPTY) {
             mResultGps = gps.requestLocation(context, GPSTracker.LocationType.GPS);
-            mLocationGps = mResultGps.location();
         } else {
             mResultGps.Reset();
-            mLocationGps = null;
         }
     }
 
@@ -152,10 +143,8 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
         if (gps == null) gps = new GPSTracker();
         if (GPSTracker.checkPermission(context).status() == LocationResult.ResultStatus.EMPTY) {
             mResultNetwork = gps.requestLocation(context, GPSTracker.LocationType.NETWORK);
-            mLocationNetwork = mResultNetwork.location();
         } else {
             mResultNetwork.Reset();
-            mLocationNetwork = null;
         }
     }
 
@@ -230,30 +219,31 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
 
         if (mReqParameters.contains(":g:")) {
             useDefault = false;
-            returnString += getLocationString(formatter, mLocationGps);
+            returnString += getLocationString(formatter, mResultGps.location());
             if (singleOutput) return returnString;
         }
 
         if (mReqParameters.contains(":n:")) {
             useDefault = false;
-            returnString += getLocationString(formatter, mLocationNetwork);
+            returnString += getLocationString(formatter, mResultNetwork.location());
             if (singleOutput) return returnString;
         }
 
         if (mReqParameters.contains(":f:")) {
             useDefault = false;
-            returnString += getLocationString(formatter, mLocationFused);
+            returnString += getLocationString(formatter, mResultFused.location());
             if (singleOutput) return returnString;
         }
 
         if (useDefault) {
-            Location mLocationDefault = mLocationFused;
+            Location mLocationDefault = mResultFused.location();
             // In very rare case, fused location is not available
             if (mLocationDefault == null) {
-                if ((mLocationGps == null) || ((mLocationNetwork != null) && (mLocationNetwork.getTime() > mLocationGps.getTime()))) {
-                    mLocationDefault = mLocationNetwork;
+                //if ((mLocationGps == null) || ((mLocationNetwork != null) && (mLocationNetwork.getTime() > mLocationGps.getTime()))) {
+                if ((!mResultGps.IsReady()) || ((mResultNetwork.IsReady()) && (mResultNetwork.getTime() > mResultGps.getTime()))) {
+                    mLocationDefault = mResultNetwork.location();
                 } else {
-                    mLocationDefault = mLocationGps;
+                    mLocationDefault = mResultGps.location();
                 }
             }
             returnString += getLocationString(formatter, mLocationDefault);
@@ -294,11 +284,13 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
                 */
             mResultFused = GPSTracker.checkPermission(mContext);
             if (mResultFused.status() != LocationResult.ResultStatus.EMPTY) {
-                mLocationFused = null;
             } else {
-                mLocationFused = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-                if (mLocationFused == null ) {
-                    mResultFused.SetLocation(mLocationFused);
+                Location fusedLocation;
+                fusedLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+                if (fusedLocation == null ) {
+                    mResultFused.Reset();
+                } else {
+                    mResultFused.SetLocation(fusedLocation);
                 }
             }
         }
@@ -309,7 +301,6 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
     public void onConnectionSuspended(int i) {
         Log.d(TAG, "GoogleApiClient connection suspended");
         mResultFused.Reset();
-        mLocationFused = null;
         resumeSendLocation();
     }
 
@@ -317,7 +308,6 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         Log.d(TAG, "GoogleApiClient connection failed");
         mResultFused.Reset();
-        mLocationFused = null;
         resumeSendLocation();
     }
 
