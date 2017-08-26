@@ -150,6 +150,8 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
 
     private void prepareLocation(Context context, String recipient) {
 
+        // Keep update all location whenever possible
+
         getGpsLocation(context);
 
         getNetworkLocation(context);
@@ -182,6 +184,24 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
                 URL:        %s: %s: %s http://maps.google.com/maps?q=%f+%f  {A: %.2fm; S:%.2fm}
                 DATA:       #location#%s#%s;%s;%f;%f;%f;%f#
                 DEBUG:      #%s#%s;%s;%f;%f;%.2fm;%.2fm#
+
+                            %s :    message version
+                            %s :    location.getProvider()
+                            %s :    format.format(new Date(location.getTime()))
+                            %f :    location.getLatitude()
+                            %f :    location.getLongitude()
+                            %.2f :  location.getAccuracy()
+                            %.2f :  location.getSpeed()
+
+            Error format:
+                URL:        %s: %s: %s
+                DATA:       #location#%s#%s;%s#
+                DEBUG:      #%s#%s;%s#
+
+                            %s :    message version
+                            %s :    result.status()
+                            %s :    result.message()
+
         */
     private void sendLocation(Context context, String recipient) {
 
@@ -190,19 +210,23 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
 
 
         String msgFormatter;
+        String msgErrorFormatter;
         String dataVersion = context.getString(R.string.app_data_version);
         switch (mReqDataType) {
             case URL:
                 msgFormatter = ": %s: %s: http://maps.google.com/maps?q=%f+%f  {A: %.2fm; S:%.2fm}";
-                msgContent = dataVersion + getLocationReturn(msgFormatter, true);
+                msgErrorFormatter = ": %s: %s";
+                msgContent = dataVersion + getLocationReturn(msgFormatter, msgErrorFormatter, true);
                 break;
             case DATA:
                 msgFormatter = "#%s;%s;%f;%f;%.2f;%.2f#";
-                msgContent = "#location#" + dataVersion + getLocationReturn(msgFormatter, false);
+                msgErrorFormatter = "#%s;%s#";
+                msgContent = "#location#" + dataVersion + getLocationReturn(msgFormatter, msgErrorFormatter, false);
                 break;
             case DEBUG:
                 msgFormatter = "#%s;%s;%f;%f;%.2f;%.2f#";
-                msgContent = "#" + dataVersion + getLocationReturn(msgFormatter, false);
+                msgErrorFormatter = "#%s;%s#";
+                msgContent = "#" + dataVersion + getLocationReturn(msgFormatter, msgErrorFormatter, false);
                 break;
         }
 
@@ -213,47 +237,51 @@ public class SmsMessageReceiver extends BroadcastReceiver implements
         }
     }
 
-    private String getLocationReturn(String formatter, boolean singleOutput) {
+    private String getLocationReturn(String formatter, String errorFormatter, boolean singleOutput) {
         Boolean useDefault = true;
         String returnString = "";
 
         if (mReqParameters.contains(":g:")) {
             useDefault = false;
-            returnString += getLocationString(formatter, mResultGps.location());
+            returnString += getLocationString(formatter, errorFormatter, mResultGps);
             if (singleOutput) return returnString;
         }
 
         if (mReqParameters.contains(":n:")) {
             useDefault = false;
-            returnString += getLocationString(formatter, mResultNetwork.location());
+            returnString += getLocationString(formatter, errorFormatter, mResultNetwork);
             if (singleOutput) return returnString;
         }
 
         if (mReqParameters.contains(":f:")) {
             useDefault = false;
-            returnString += getLocationString(formatter, mResultFused.location());
+            returnString += getLocationString(formatter, errorFormatter, mResultFused);
             if (singleOutput) return returnString;
         }
 
         if (useDefault) {
-            Location mLocationDefault = mResultFused.location();
+            LocationResult resultDefault = mResultFused;
             // In very rare case, fused location is not available
-            if (mLocationDefault == null) {
-                //if ((mLocationGps == null) || ((mLocationNetwork != null) && (mLocationNetwork.getTime() > mLocationGps.getTime()))) {
+            if (!resultDefault.IsReady()) {
                 if ((!mResultGps.IsReady()) || ((mResultNetwork.IsReady()) && (mResultNetwork.getTime() > mResultGps.getTime()))) {
-                    mLocationDefault = mResultNetwork.location();
+                    resultDefault = mResultNetwork;
                 } else {
-                    mLocationDefault = mResultGps.location();
+                    resultDefault = mResultGps;
                 }
             }
-            returnString += getLocationString(formatter, mLocationDefault);
+            returnString += getLocationString(formatter, errorFormatter, resultDefault);
         }
         return returnString;
     }
 
-    private String getLocationString(String formatter, Location location) {
-        if (location == null) return "";
-        return String.format(formatter, location.getProvider(), format.format(new Date(location.getTime())), location.getLatitude(), location.getLongitude(), location.getAccuracy(), location.getSpeed());
+    private String getLocationString(String formatter, String errorFormatter, LocationResult result) {
+        if (result.IsReady()) {
+            Location location = result.location();
+            if (location == null) return "";
+            return String.format(formatter, location.getProvider(), format.format(new Date(location.getTime())), location.getLatitude(), location.getLongitude(), location.getAccuracy(), location.getSpeed());
+        } else {
+            return String.format(errorFormatter, result.status().toString(), result.message());
+        }
     }
 
 

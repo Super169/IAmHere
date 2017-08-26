@@ -115,7 +115,7 @@ public class GPSTracker extends Service implements LocationListener {
                     }
                 }
             } else {
-                mResult.SetError(LocationResult.ResultStatus.NO_SERVICE, service + " not available");
+                mResult.SetError(LocationResult.ResultStatus.NO_SERVICE, service + " location not available");
             }
         } catch (Exception e) {
             mResult.SetError(LocationResult.ResultStatus.UNEXPECTED_ERROR, e.getMessage());
